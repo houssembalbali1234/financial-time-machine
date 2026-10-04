@@ -91,3 +91,44 @@ class SummaryOut(BaseModel):
 class SimulationResponse(BaseModel):
     summary: SummaryOut
     months: list[MonthOut]
+
+
+
+class ScenarioRequest(BaseModel):
+    profile: ProfileIn
+    decision: DecisionIn
+    horizon_months: Literal[6, 12, 24, 36, 60] = 36
+
+
+class ScenarioOut(BaseModel):
+    key: str
+    name: str
+    price: float
+    start_month: int
+    summary: SummaryOut
+
+
+class ScenariosResponse(BaseModel):
+    scenarios: list[ScenarioOut]
+    recommended: str
+
+
+class ShockIn(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    income_factor: float = Field(ge=0, le=1, description="0.7 = revenu -30 %, 0 = perte totale")
+    start_month: int = Field(default=1, ge=1, le=60)
+    duration_months: int = Field(ge=1, le=60)
+
+
+class StressRequest(BaseModel):
+    profile: ProfileIn
+    decision: DecisionIn | None = None
+    shock: ShockIn
+    horizon_months: Literal[6, 12, 24, 36, 60] = 36
+
+
+class StressResponse(BaseModel):
+    baseline: SummaryOut
+    stressed: SummaryOut
+    cash_lost: float
+    months_of_resilience: int
