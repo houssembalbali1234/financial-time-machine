@@ -3,6 +3,13 @@ from .loans import LoanState
 from .models import Decision, FinancialProfile, MonthResult, SimulationResult
 
 
+def debt_ratio(payments: float, income: float) -> float:
+    """Part du revenu consacrée aux crédits (plafonnée à 1 si le revenu est nul)."""
+    if income > 0:
+        return round(payments / income, 4)
+    return 1.0 if payments > 0 else 0.0
+
+
 def project(
     profile: FinancialProfile,
     horizon_months: int,
@@ -69,7 +76,7 @@ def project(
             debt_remaining=round(debt, 3),
             asset_value=round(asset_value, 3),
             net_worth=round(cash + asset_value - debt, 3),
-            debt_ratio=round(payments / income, 4) if income > 0 else float("inf"),
+            debt_ratio=debt_ratio(payments, income),
         ))
 
     return SimulationResult(results)

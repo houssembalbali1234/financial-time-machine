@@ -23,9 +23,10 @@ def run_stress_test(profile: FinancialProfile, horizon_months: int, shock: Incom
     return project(profile, horizon_months, decision, income_multipliers=multipliers)
 
 
-def months_of_resilience(profile: FinancialProfile, max_months: int = 60) -> int:
+def months_of_resilience(profile: FinancialProfile, decision: Decision | None = None,
+                         max_months: int = 60) -> int:
     """Nombre de mois tenus sans aucun revenu avant que l'épargne devienne négative."""
     shock = IncomeShock("perte_totale", 0.0, 1, max_months)
-    result = run_stress_test(profile, max_months, shock)
+    result = run_stress_test(profile, max_months, shock, decision)
     first_negative = result.first_negative_month
     return max_months if first_negative is None else first_negative - 1

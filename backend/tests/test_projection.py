@@ -72,3 +72,16 @@ def test_months_of_resilience():
 def test_invalid_horizon():
     with pytest.raises(ValueError):
         project(PROFILE, 0)
+
+
+
+
+
+def test_debt_ratio_without_income_is_capped():
+    shock = IncomeShock("perte_emploi", 0.0, 1, 3)
+    r = run_stress_test(PROFILE, 12, shock, CAR)
+    assert r.months[0].debt_ratio == 1.0
+
+
+def test_resilience_is_shorter_with_a_loan():
+    assert months_of_resilience(PROFILE, CAR) < months_of_resilience(PROFILE)
