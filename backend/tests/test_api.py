@@ -123,3 +123,25 @@ def test_stress_test_loses_three_salaries():
 def test_invalid_shock_is_rejected():
     bad = {**STRESS, "shock": {**STRESS["shock"], "income_factor": 1.5}}
     assert client.post("/simulations/stress-test", json=bad).status_code == 422
+
+
+
+
+# ---------- Health Score ----------
+
+def test_health_score_without_decision():
+    response = client.post("/health-score", json={"profile": PAYLOAD["profile"]})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["current"]["total"] == 100
+    assert body["after_decision"] is None
+    assert len(body["current"]["factors"]) == 4
+
+
+def test_health_score_shows_impact_of_decision():
+    response = client.post("/health-score",
+                           json={"profile": PAYLOAD["profile"], "decision": PAYLOAD["decision"]})
+    body = response.json()
+    assert body["after_decision"]["total"] == 46
+    assert body["after_decision"]["grade"] == "Fragile"
+    assert body["impact"] == -54

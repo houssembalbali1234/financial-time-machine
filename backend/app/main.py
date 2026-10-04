@@ -1,7 +1,7 @@
 """Point d'entrée de l'API Financial Time Machine."""
 from fastapi import FastAPI
 
-from app.api.routes import simulations
+from app.api.routes import health_score, simulations
 
 app = FastAPI(
     title="Financial Time Machine API",
@@ -17,3 +17,4 @@ def health() -> dict:
 
 
 app.include_router(simulations.router)
+app.include_router(health_score.router)
