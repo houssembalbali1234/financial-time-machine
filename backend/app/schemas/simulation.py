@@ -86,12 +86,12 @@ class SummaryOut(BaseModel):
     months_negative: int
     first_negative_month: int | None
     max_debt_ratio: float
+    max_monthly_outflow: float
 
 
 class SimulationResponse(BaseModel):
     summary: SummaryOut
     months: list[MonthOut]
-
 
 
 class ScenarioRequest(BaseModel):

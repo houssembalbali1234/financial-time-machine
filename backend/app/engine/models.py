@@ -72,5 +72,10 @@ class SimulationResult:
         return max(m.debt_ratio for m in self.months)
 
     @property
+    def max_monthly_outflow(self) -> float:
+        """Plus grosse sortie mensuelle : dépenses + mensualités de crédit."""
+        return round(max(m.expenses + m.loan_payments for m in self.months), 3)
+
+    @property
     def first_negative_month(self) -> int | None:
         return next((m.month for m in self.months if m.cash < 0), None)

@@ -41,22 +41,28 @@ def to_summary(result: SimulationResult) -> SummaryOut:
         months_negative=result.months_negative,
         first_negative_month=result.first_negative_month,
         max_debt_ratio=result.max_debt_ratio,
+        max_monthly_outflow=result.max_monthly_outflow,
     )
 
 
-def pick_recommended(scenarios: list[ScenarioOut], monthly_expenses: float) -> str:
-    """Premier scénario « sûr » dans l'ordre de préférence de l'utilisateur.
+SAFETY_MONTHS = 3        # épargne de sécurité : 3 mois de sorties
+MAX_DEBT_RATIO = 0.40    # crédits : au plus 40 % du revenu
 
-    Sûr = l'épargne ne descend jamais sous 3 mois de dépenses
-    et les crédits ne dépassent jamais 40 % du revenu.
-    Si aucun n'est sûr, on recommande celui qui garde le plus d'épargne.
-    """
-    safety_cushion = 3 * monthly_expenses
+
+def is_safe(summary: SummaryOut) -> bool:
+    """Sûr = l'épargne couvre toujours 3 mois de sorties (dépenses + crédits)
+    et les crédits ne dépassent jamais 40 % du revenu."""
+    cushion = SAFETY_MONTHS * summary.max_monthly_outflow
+    return summary.min_cash >= cushion and summary.max_debt_ratio <= MAX_DEBT_RATIO
+
+
+def pick_recommended(scenarios: list[ScenarioOut]) -> str:
+    """Premier scénario sûr dans l'ordre de préférence de l'utilisateur.
+    Si aucun n'est sûr, celui qui garde le plus d'épargne."""
     preference = ["maintenant", "moins_cher", "dans_6_mois", "dans_12_mois"]
     by_key = {s.key: s for s in scenarios}
     for key in preference:
-        s = by_key[key]
-        if s.summary.min_cash >= safety_cushion and s.summary.max_debt_ratio <= 0.40:
+        if is_safe(by_key[key].summary):
             return key
     return max(scenarios, key=lambda s: s.summary.min_cash).key
 
@@ -94,7 +100,7 @@ def compare_scenarios(request: ScenarioRequest) -> ScenariosResponse:
 
     return ScenariosResponse(
         scenarios=scenarios,
-        recommended=pick_recommended(scenarios, request.profile.monthly_expenses),
+        recommended=pick_recommended(scenarios),
     )
 
 
