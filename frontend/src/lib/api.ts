@@ -92,3 +92,45 @@ export function simulate(profile: Profile, decision: Decision | null, horizon = 
 export function getHealthScore(profile: Profile, decision: Decision | null) {
   return post<HealthScoreResult>("/health-score", { profile, decision });
 }
+
+
+export type ScenarioOut = {
+  key: string;
+  name: string;
+  price: number;
+  start_month: number;
+  summary: Summary;
+};
+
+export type ScenariosResult = { scenarios: ScenarioOut[]; recommended: string };
+
+export type Shock = {
+  name: string;
+  income_factor: number;   // 0 = aucun revenu, 0.7 = revenu -30 %
+  start_month: number;
+  duration_months: number;
+};
+
+export type StressResult = {
+  baseline: Summary;
+  stressed: Summary;
+  cash_lost: number;
+  months_of_resilience: number;
+};
+
+export function compareScenarios(profile: Profile, decision: Decision, horizon = 36) {
+  return post<ScenariosResult>("/simulations/scenarios", {
+    profile,
+    decision,
+    horizon_months: horizon,
+  });
+}
+
+export function stressTest(profile: Profile, decision: Decision, shock: Shock, horizon = 36) {
+  return post<StressResult>("/simulations/stress-test", {
+    profile,
+    decision,
+    shock,
+    horizon_months: horizon,
+  });
+}

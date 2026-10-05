@@ -5,11 +5,12 @@ import { useEffect, useState } from "react";
 import { FutureChart } from "@/components/FutureChart";
 import { HealthPanel } from "@/components/HealthPanel";
 import { NumberField } from "@/components/NumberField";
+import { ScenarioTable } from "@/components/ScenarioTable";
+import { StressTest } from "@/components/StressTest";
 import { WarningList } from "@/components/WarningList";
-
 import {
-  getHealthScore, simulate,
-  type Decision, type HealthScoreResult, type Profile, type SimulationResult,
+  compareScenarios, getHealthScore, simulate,
+  type Decision, type HealthScoreResult, type Profile, type ScenariosResult, type SimulationResult,
 } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
 import { HORIZONS, PRESETS, type Horizon } from "@/lib/presets";
@@ -18,6 +19,7 @@ type Results = {
   withDecision: SimulationResult;
   withoutDecision: SimulationResult;
   health: HealthScoreResult;
+  scenarios: ScenariosResult;
 };
 
 const DEFAULT_PROFILE: Profile = {
@@ -46,12 +48,13 @@ export default function Home() {
   useEffect(() => {
     const timer = setTimeout(async () => {
       try {
-        const [withDecision, withoutDecision, health] = await Promise.all([
+        const [withDecision, withoutDecision, health, scenarios] = await Promise.all([
           simulate(profile, decision, horizon),
           simulate(profile, null, horizon),
           getHealthScore(profile, decision),
+          compareScenarios(profile, decision, horizon),
         ]);
-        setResults({ withDecision, withoutDecision, health });
+        setResults({ withDecision, withoutDecision, health, scenarios });
         setError(null);
       } catch {
         setError("Impossible de calculer : vérifiez que l'API tourne sur le port 8000 "
@@ -214,6 +217,16 @@ export default function Home() {
               <HealthPanel health={results.health} />
             </div>
           )}
+
+          {results && (
+            <div className="rounded-lg border border-ligne bg-papier p-6">
+              <ScenarioTable result={results.scenarios} />
+            </div>
+          )}
+
+          <div className="rounded-lg border border-ligne bg-papier p-6">
+            <StressTest profile={profile} decision={decision} horizon={horizon} />
+          </div>
         </main>
       </div>
     </div>
