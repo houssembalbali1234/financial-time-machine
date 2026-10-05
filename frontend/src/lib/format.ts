@@ -1,16 +1,18 @@
-// Mise en forme française : espaces entre milliers, virgule décimale.
+// Mise en forme française des montants : « 45 000 € », « 9,8 ».
+// La devise est définie à un seul endroit pour pouvoir la changer facilement.
 
-const tnd = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 });
-const percent = new Intl.NumberFormat("fr-FR", { style: "percent", maximumFractionDigits: 0 });
+export const CURRENCY = "EUR";
 
-export function formatTND(value: number): string {
-  return `${tnd.format(value)} TND`;
+const money = new Intl.NumberFormat("fr-FR", {
+  style: "currency",
+  currency: CURRENCY,
+  maximumFractionDigits: 0,
+});
+
+export function formatMoney(value: number): string {
+  return money.format(value);
 }
 
 export function formatNumber(value: number, decimals = 0): string {
   return value.toLocaleString("fr-FR", { maximumFractionDigits: decimals });
-}
-
-export function formatPercent(ratio: number): string {
-  return percent.format(ratio);
 }
