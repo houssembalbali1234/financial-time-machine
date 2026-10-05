@@ -1,26 +1,37 @@
 @import "tailwindcss";
 
+/* Palette inspirée de Sidi Bou Said : murs chaulés, bleu des portes, olivier, grenade */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --chaux: #f6f7f4;    /* fond : blanc chaulé, légèrement froid */
+  --papier: #ffffff;   /* panneaux */
+  --encre: #16233b;    /* texte principal */
+  --pierre: #6b7486;   /* texte secondaire, futur « sans décision » */
+  --ligne: #dce1e8;    /* bordures et grilles */
+  --bleu: #1e5aa8;     /* couleur de la marque, futur « avec décision » */
+  --olive: #5f7a2e;    /* ce qui va bien */
+  --grenade: #a8322d;  /* ce qui met en danger */
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-chaux: var(--chaux);
+  --color-papier: var(--papier);
+  --color-encre: var(--encre);
+  --color-pierre: var(--pierre);
+  --color-ligne: var(--ligne);
+  --color-bleu: var(--bleu);
+  --color-olive: var(--olive);
+  --color-grenade: var(--grenade);
+  --font-sans: var(--font-plex);
+  --font-display: var(--font-bricolage);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--chaux);
+  color: var(--encre);
+  font-family: var(--font-plex), system-ui, sans-serif;
+}
+
+/* Chiffres alignés en colonnes, indispensable pour des montants */
+.chiffres {
+  font-variant-numeric: tabular-nums;
 }
