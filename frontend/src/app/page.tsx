@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { FutureChart } from "@/components/FutureChart";
 import { HealthPanel } from "@/components/HealthPanel";
 import { NumberField } from "@/components/NumberField";
+import { WarningList } from "@/components/WarningList";
+
 import {
   getHealthScore, simulate,
   type Decision, type HealthScoreResult, type Profile, type SimulationResult,
@@ -172,6 +174,7 @@ export default function Home() {
 
             {results && (
               <>
+                <WarningList warnings={results.withDecision.warnings} />
                 <FutureChart
                   withDecision={results.withDecision.months}
                   withoutDecision={results.withoutDecision.months}
