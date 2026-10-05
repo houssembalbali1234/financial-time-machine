@@ -4,7 +4,7 @@ from dataclasses import asdict
 from fastapi import APIRouter
 
 from app.engine import (Decision, ExistingLoan, FinancialProfile, IncomeShock,
-                        SimulationResult, generate_purchase_scenarios,
+                        SimulationResult, check_inputs, generate_purchase_scenarios,
                         months_of_resilience, project, run_stress_test)
 from app.schemas.simulation import (DecisionIn, ProfileIn, ScenarioOut, ScenarioRequest,
                                     ScenariosResponse, SimulationRequest,
@@ -70,14 +70,13 @@ def pick_recommended(scenarios: list[ScenarioOut]) -> str:
 @router.post("", response_model=SimulationResponse)
 def run_simulation(request: SimulationRequest) -> SimulationResponse:
     """Projette la situation financière mois par mois, avec ou sans décision."""
-    result = project(
-        to_profile(request.profile),
-        request.horizon_months,
-        to_decision(request.decision),
-    )
+    profile = to_profile(request.profile)
+    decision = to_decision(request.decision)
+    result = project(profile, request.horizon_months, decision)
     return SimulationResponse(
         summary=to_summary(result),
         months=[asdict(m) for m in result.months],
+        warnings=[asdict(w) for w in check_inputs(profile, decision)],
     )
 
 

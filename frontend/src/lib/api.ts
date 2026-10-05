@@ -43,7 +43,13 @@ export type Summary = {
   max_monthly_outflow: number;
 };
 
-export type SimulationResult = { summary: Summary; months: Month[] };
+export type InputWarning = {
+  code: string;
+  level: "danger" | "attention";
+  values: Record<string, number>;
+};
+
+export type SimulationResult = { summary: Summary; months: Month[]; warnings: InputWarning[] };
 
 export type HealthFactor = {
   key: string;

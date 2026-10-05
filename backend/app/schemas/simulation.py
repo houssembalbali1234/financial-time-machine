@@ -95,9 +95,16 @@ class SummaryOut(BaseModel):
     max_monthly_outflow: float
 
 
+class WarningOut(BaseModel):
+    code: str
+    level: str
+    values: dict[str, float]
+
+
 class SimulationResponse(BaseModel):
     summary: SummaryOut
     months: list[MonthOut]
+    warnings: list[WarningOut] = []
 
 
 class ScenarioRequest(BaseModel):

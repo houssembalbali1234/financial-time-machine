@@ -29,6 +29,16 @@ class HealthScore:
     factors: list[HealthFactor]
 
 
+def fr_number(value: float, decimals: int = 1) -> str:
+    """Nombre à la française : 2.5 -> « 2,5 »."""
+    return f"{value:.{decimals}f}".replace(".", ",")
+
+
+def fr_percent(ratio: float) -> str:
+    """Pourcentage à la française : 0.26 -> « 26 % »."""
+    return f"{ratio * 100:.0f} %"
+
+
 def scale(value: float, worst: float, best: float) -> float:
     """Transforme une mesure en note de 0 à 100 (linéaire entre worst et best)."""
     if best == worst:
@@ -66,17 +76,17 @@ def health_score(profile: FinancialProfile, decision: Decision | None = None) ->
         HealthFactor(
             "cushion", "Épargne de sécurité", round(cushion, 1),
             scale(cushion, 0, 6), 0.30,
-            f"Votre épargne couvre {max(cushion, 0):.1f} mois de sorties (objectif : 6 mois).",
+            f"Votre épargne couvre {fr_number(max(cushion, 0))} mois de sorties (objectif : 6 mois).",
         ),
         HealthFactor(
             "debt", "Endettement", round(debt, 3),
             scale(debt, 0.40, 0.0), 0.25,
-            f"Vos crédits représentent {debt:.0%} de votre revenu (limite : 40 %).",
+            f"Vos crédits représentent {fr_percent(debt)} de votre revenu (limite : 40 %).",
         ),
         HealthFactor(
             "savings", "Capacité d'épargne", round(savings_rate, 3),
             scale(savings_rate, 0.0, 0.20), 0.25,
-            f"Vous mettez de côté {max(savings_rate, 0):.0%} de votre revenu (objectif : 20 %).",
+            f"Vous mettez de côté {fr_percent(max(savings_rate, 0))} de votre revenu (objectif : 20 %).",
         ),
         HealthFactor(
             "trajectory", "Trajectoire", positive_months,

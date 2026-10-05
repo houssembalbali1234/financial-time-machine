@@ -157,3 +157,11 @@ def test_ten_year_horizon_and_appreciation_are_accepted():
     response = client.post("/simulations", json=payload)
     assert response.status_code == 200
     assert len(response.json()["months"]) == 120
+
+
+
+def test_simulation_returns_warnings():
+    bad = {**PAYLOAD, "decision": {**PAYLOAD["decision"], "down_payment": 20000}}
+    response = client.post("/simulations", json=bad)
+    assert response.status_code == 200
+    assert response.json()["warnings"][0]["code"] == "down_payment_exceeds_cash"
