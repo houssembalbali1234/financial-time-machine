@@ -4,13 +4,15 @@ import { useEffect, useState } from "react";
 
 import { FutureChart } from "@/components/FutureChart";
 import { HealthPanel } from "@/components/HealthPanel";
+import { HistoryPanel } from "@/components/HistoryPanel";
 import { NumberField } from "@/components/NumberField";
 import { ScenarioTable } from "@/components/ScenarioTable";
 import { StressTest } from "@/components/StressTest";
 import { WarningList } from "@/components/WarningList";
 import {
   compareScenarios, getHealthScore, simulate,
-  type Decision, type HealthScoreResult, type Profile, type ScenariosResult, type SimulationResult,
+  type Decision, type HealthScoreResult, type Profile, type SavedSimulation,
+  type ScenariosResult, type SimulationResult,
 } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
 import { HORIZONS, PRESETS, type Horizon } from "@/lib/presets";
@@ -70,6 +72,31 @@ export default function Home() {
     setPresetKey(key);
     setDecision(preset.decision);
     setHorizon(preset.horizon);
+  };
+
+  // Recharge une simulation enregistrée dans le formulaire.
+  const openSaved = (saved: SavedSimulation) => {
+    const p = saved.profile;
+    const d = saved.decision;
+    setProfile({
+      monthly_income: p.monthly_income,
+      monthly_expenses: p.monthly_expenses,
+      cash: p.cash,
+      annual_inflation: p.annual_inflation,
+    });
+    setDecision({
+      name: d.name,
+      price: d.price,
+      down_payment: d.down_payment,
+      loan_annual_rate: d.loan_annual_rate,
+      loan_months: d.loan_months,
+      asset_annual_depreciation: d.asset_annual_depreciation,
+      extra_monthly_cost: d.extra_monthly_cost,
+    });
+    const known = HORIZONS.find((h) => h.value === saved.horizon_months);
+    setHorizon(known ? known.value : 36);
+    setPresetKey(PRESETS.find((preset) => preset.label === d.name)?.key ?? "");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const updateProfile = (key: keyof Profile) => (value: number) =>
@@ -226,6 +253,10 @@ export default function Home() {
 
           <div className="rounded-lg border border-ligne bg-papier p-6">
             <StressTest profile={profile} decision={decision} horizon={horizon} />
+          </div>
+
+          <div className="rounded-lg border border-ligne bg-papier p-6">
+            <HistoryPanel profile={profile} decision={decision} horizon={horizon} onOpen={openSaved} />
           </div>
         </main>
       </div>

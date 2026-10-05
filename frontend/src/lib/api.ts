@@ -134,3 +134,30 @@ export function stressTest(profile: Profile, decision: Decision, shock: Shock, h
     horizon_months: horizon,
   });
 }
+
+
+export type SavedSimulation = {
+  id: number;
+  name: string;
+  created_at: string;
+  profile: Profile;
+  decision: Decision;
+  horizon_months: number;
+  final_cash: number;
+  health_score: number;
+};
+
+export function saveSimulation(name: string, profile: Profile, decision: Decision, horizon: number) {
+  return post<SavedSimulation>("/history", { name, profile, decision, horizon_months: horizon });
+}
+
+export async function listHistory(): Promise<SavedSimulation[]> {
+  const response = await fetch(`${API_URL}/history`);
+  if (!response.ok) throw new Error(`L'API a répondu ${response.status} sur /history`);
+  return response.json() as Promise<SavedSimulation[]>;
+}
+
+export async function deleteSimulation(id: number): Promise<void> {
+  const response = await fetch(`${API_URL}/history/${id}`, { method: "DELETE" });
+  if (!response.ok) throw new Error(`L'API a répondu ${response.status} sur /history/${id}`);
+}
