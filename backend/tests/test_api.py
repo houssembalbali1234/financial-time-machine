@@ -145,3 +145,15 @@ def test_health_score_shows_impact_of_decision():
     assert body["after_decision"]["total"] == 46
     assert body["after_decision"]["grade"] == "Fragile"
     assert body["impact"] == -54
+
+
+
+
+def test_ten_year_horizon_and_appreciation_are_accepted():
+    house = {**PAYLOAD["decision"], "name": "Logement", "price": 250000,
+             "down_payment": 50000, "loan_months": 300, "asset_annual_depreciation": -0.01}
+    payload = {"profile": {**PAYLOAD["profile"], "cash": 70000, "monthly_income": 5000},
+               "decision": house, "horizon_months": 120}
+    response = client.post("/simulations", json=payload)
+    assert response.status_code == 200
+    assert len(response.json()["months"]) == 120

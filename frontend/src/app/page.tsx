@@ -4,12 +4,13 @@ import { useEffect, useState } from "react";
 
 import { FutureChart } from "@/components/FutureChart";
 import { HealthPanel } from "@/components/HealthPanel";
-import { NumberField } from "@/components/NumberField" ;
+import { NumberField } from "@/components/NumberField";
 import {
   getHealthScore, simulate,
   type Decision, type HealthScoreResult, type Profile, type SimulationResult,
 } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
+import { HORIZONS, PRESETS, type Horizon } from "@/lib/presets";
 
 type Results = {
   withDecision: SimulationResult;
@@ -24,19 +25,18 @@ const DEFAULT_PROFILE: Profile = {
   annual_inflation: 0.03,
 };
 
-const DEFAULT_DECISION: Decision = {
-  name: "Voiture",
-  price: 30000,
-  down_payment: 6000,
-  loan_annual_rate: 0.065,
-  loan_months: 60,
-  asset_annual_depreciation: 0.12,
-  extra_monthly_cost: 200,
-};
+// Bouton d'un groupe de choix (type de décision, durée d'observation)
+function choiceClass(selected: boolean): string {
+  return `rounded-full border px-3 py-1.5 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bleu ${
+    selected ? "border-bleu bg-bleu text-white" : "border-ligne bg-papier text-encre hover:border-bleu"
+  }`;
+}
 
 export default function Home() {
   const [profile, setProfile] = useState(DEFAULT_PROFILE);
-  const [decision, setDecision] = useState(DEFAULT_DECISION);
+  const [presetKey, setPresetKey] = useState(PRESETS[0].key);
+  const [decision, setDecision] = useState<Decision>(PRESETS[0].decision);
+  const [horizon, setHorizon] = useState<Horizon>(PRESETS[0].horizon);
   const [results, setResults] = useState<Results | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,8 +45,8 @@ export default function Home() {
     const timer = setTimeout(async () => {
       try {
         const [withDecision, withoutDecision, health] = await Promise.all([
-          simulate(profile, decision),
-          simulate(profile, null),
+          simulate(profile, decision, horizon),
+          simulate(profile, null, horizon),
           getHealthScore(profile, decision),
         ]);
         setResults({ withDecision, withoutDecision, health });
@@ -57,13 +57,22 @@ export default function Home() {
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [profile, decision]);
+  }, [profile, decision, horizon]);
+
+  const choosePreset = (key: string) => {
+    const preset = PRESETS.find((p) => p.key === key);
+    if (!preset) return;
+    setPresetKey(key);
+    setDecision(preset.decision);
+    setHorizon(preset.horizon);
+  };
 
   const updateProfile = (key: keyof Profile) => (value: number) =>
     setProfile((p) => ({ ...p, [key]: value }));
   const updateDecision = (key: keyof Decision) => (value: number) =>
     setDecision((d) => ({ ...d, [key]: value }));
 
+  const horizonLabel = HORIZONS.find((h) => h.value === horizon)?.label ?? `${horizon} mois`;
   const turningMonth = results?.withDecision.months.find((m) => m.cash_flow < 0)?.month ?? null;
 
   return (
@@ -90,8 +99,20 @@ export default function Home() {
 
           <fieldset className="flex flex-col gap-4">
             <legend className="mb-2 font-display text-lg font-semibold">Votre décision</legend>
+
+            <div role="radiogroup" aria-label="Type de décision" className="flex flex-wrap gap-2">
+              {PRESETS.map((preset) => (
+                <button key={preset.key} type="button" role="radio"
+                        aria-checked={preset.key === presetKey}
+                        className={choiceClass(preset.key === presetKey)}
+                        onClick={() => choosePreset(preset.key)}>
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+
             <label className="flex flex-col gap-1.5">
-              <span className="text-sm text-pierre">Ce que vous voulez acheter</span>
+              <span className="text-sm text-pierre">Nom du projet</span>
               <input
                 className="rounded-md border border-ligne px-3 py-2 outline-none focus:border-bleu focus:ring-2 focus:ring-bleu/20"
                 value={decision.name}
@@ -110,18 +131,38 @@ export default function Home() {
             <NumberField label="Frais mensuels liés à l'achat" suffix="€" step={50}
                          value={decision.extra_monthly_cost}
                          onChange={updateDecision("extra_monthly_cost")} />
+            <NumberField label="Évolution de la valeur par an" suffix="%" step={1} min={-100}
+                         value={Math.round(-decision.asset_annual_depreciation * 1000) / 10}
+                         onChange={(v) => updateDecision("asset_annual_depreciation")(-v / 100)} />
+            <p className="-mt-2 text-xs text-pierre">
+              Négatif si le bien perd de la valeur (voiture : -12 %), -100 % s&apos;il n&apos;en garde
+              aucune (études, mariage).
+            </p>
           </fieldset>
         </aside>
 
         <main className="order-1 flex flex-col gap-10 lg:order-2">
           <section className="flex flex-col gap-4">
             <h1 className="font-display text-3xl font-bold leading-tight sm:text-4xl">
-              {decision.name || "Cet achat"} à {formatMoney(decision.price || 0)}&nbsp;: et si je
-              l&apos;achetais maintenant&nbsp;?
+              {decision.name || "Ce projet"} à {formatMoney(decision.price || 0)}&nbsp;: et si je
+              me lançais maintenant&nbsp;?
             </h1>
-            <p className="max-w-prose text-pierre">
-              Votre épargne mois par mois pendant 3 ans, avec et sans cet achat.
-            </p>
+
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="max-w-prose text-pierre">
+                Votre épargne mois par mois pendant {horizonLabel}, avec et sans ce projet.
+              </p>
+              <div role="radiogroup" aria-label="Durée observée" className="flex gap-2">
+                {HORIZONS.map((h) => (
+                  <button key={h.value} type="button" role="radio"
+                          aria-checked={h.value === horizon}
+                          className={choiceClass(h.value === horizon)}
+                          onClick={() => setHorizon(h.value)}>
+                    {h.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {error && (
               <p role="alert" className="rounded-md border border-grenade/30 bg-grenade/5 p-4 text-grenade">
@@ -134,17 +175,17 @@ export default function Home() {
                 <FutureChart
                   withDecision={results.withDecision.months}
                   withoutDecision={results.withoutDecision.months}
-                  decisionName={decision.name || "l'achat"}
+                  decisionName={decision.name || "le projet"}
                   turningMonth={turningMonth}
                 />
                 <dl className="chiffres grid grid-cols-2 gap-6 border-t border-ligne pt-6 sm:grid-cols-3">
                   <div>
-                    <dt className="text-sm text-pierre">Épargne dans 3 ans</dt>
+                    <dt className="text-sm text-pierre">Épargne dans {horizonLabel}</dt>
                     <dd className="font-display text-2xl font-semibold">
                       {formatMoney(results.withDecision.summary.final_cash)}
                     </dd>
                     <dd className="text-sm text-pierre">
-                      {formatMoney(results.withoutDecision.summary.final_cash)} sans l&apos;achat
+                      {formatMoney(results.withoutDecision.summary.final_cash)} sans ce projet
                     </dd>
                   </div>
                   <div>

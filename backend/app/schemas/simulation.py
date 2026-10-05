@@ -3,6 +3,9 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
+# Horizons de projection proposés : de 6 mois à 10 ans
+Horizon = Literal[6, 12, 24, 36, 60, 120]
+
 
 class ExistingLoanIn(BaseModel):
     remaining_principal: float = Field(gt=0, description="Capital restant dû")
@@ -26,7 +29,10 @@ class DecisionIn(BaseModel):
     loan_annual_rate: float = Field(ge=0, le=1)
     loan_months: int = Field(ge=1, le=360)
     start_month: int = Field(default=1, ge=1, le=60)
-    asset_annual_depreciation: float = Field(default=0.0, ge=0, le=1)
+    asset_annual_depreciation: float = Field(
+        default=0.0, ge=-0.2, le=1,
+        description="Perte de valeur par an (0.12 = -12 %). Négatif = le bien prend de la valeur.",
+    )
     extra_monthly_cost: float = Field(default=0.0, ge=0)
 
     @model_validator(mode="after")
@@ -39,7 +45,7 @@ class DecisionIn(BaseModel):
 class SimulationRequest(BaseModel):
     profile: ProfileIn
     decision: DecisionIn | None = None
-    horizon_months: Literal[6, 12, 24, 36, 60] = 36
+    horizon_months: Horizon = 36
 
     model_config = {
         "json_schema_extra": {
@@ -97,7 +103,7 @@ class SimulationResponse(BaseModel):
 class ScenarioRequest(BaseModel):
     profile: ProfileIn
     decision: DecisionIn
-    horizon_months: Literal[6, 12, 24, 36, 60] = 36
+    horizon_months: Horizon = 36
 
 
 class ScenarioOut(BaseModel):
@@ -124,7 +130,7 @@ class StressRequest(BaseModel):
     profile: ProfileIn
     decision: DecisionIn | None = None
     shock: ShockIn
-    horizon_months: Literal[6, 12, 24, 36, 60] = 36
+    horizon_months: Horizon = 36
 
 
 class StressResponse(BaseModel):

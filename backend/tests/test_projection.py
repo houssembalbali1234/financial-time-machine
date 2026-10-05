@@ -85,3 +85,13 @@ def test_debt_ratio_without_income_is_capped():
 
 def test_resilience_is_shorter_with_a_loan():
     assert months_of_resilience(PROFILE, CAR) < months_of_resilience(PROFILE)
+
+
+
+
+def test_house_can_gain_value():
+    house = Decision(name="Logement", price=250_000, down_payment=50_000,
+                     loan_annual_rate=0.037, loan_months=300,
+                     asset_annual_depreciation=-0.01)   # +1 % par an
+    r = project(FinancialProfile(5_000, 2_500, 70_000), 24, house)
+    assert r.months[12].asset_value == pytest.approx(250_000 * 1.01, rel=1e-6)

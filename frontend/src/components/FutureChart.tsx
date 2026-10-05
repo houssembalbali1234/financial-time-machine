@@ -15,6 +15,14 @@ type Props = {
 };
 
 // Les deux futurs possibles de l'épargne, mois par mois.
+// Graduation : un repère par an, en mois sur 3 ans, en années au-delà.
+function tickLabel(month: number, horizon: number): string {
+  if (month % 12 !== 0) return "";
+  if (horizon <= 36) return `${month} mois`;
+  const years = month / 12;
+  return years === 1 ? "1 an" : `${years} ans`;
+}
+
 export function FutureChart({ withDecision, withoutDecision, decisionName, turningMonth }: Props) {
   const name = decisionName.toLowerCase();
   const data = withDecision.map((m, i) => ({
@@ -52,7 +60,7 @@ export function FutureChart({ withDecision, withoutDecision, decisionName, turni
               tickLine={false}
               axisLine={{ stroke: "var(--ligne)" }}
               tick={{ fill: "var(--pierre)", fontSize: 12 }}
-              tickFormatter={(m: number) => (m % 12 === 0 ? `${m} mois` : "")}
+              tickFormatter={(m: number) => tickLabel(m, data.length)}
               interval={0}
             />
             <YAxis
