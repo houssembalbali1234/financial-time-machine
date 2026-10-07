@@ -69,16 +69,46 @@ export type HealthScoreResult = {
   impact: number | null;
 };
 
-async function post<T>(path: string, body: unknown): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!response.ok) {
-    throw new Error(`L'API a répondu ${response.status} sur ${path}`);
+// Erreur de l'API, avec son code HTTP (401, 409...) pour afficher le bon message.
+export class ApiError extends Error {
+  constructor(public status: number, path: string) {
+    super(`L'API a répondu ${status} sur ${path}`);
   }
-  return response.json() as Promise<T>;
+}
+
+// ---------- Connexion : le jeton est gardé dans le navigateur ----------
+
+const TOKEN_KEY = "ftm_token";
+
+export function getToken(): string | null {
+  return typeof window === "undefined" ? null : window.localStorage.getItem(TOKEN_KEY);
+}
+
+export function setToken(token: string) {
+  window.localStorage.setItem(TOKEN_KEY, token);
+}
+
+export function clearToken() {
+  window.localStorage.removeItem(TOKEN_KEY);
+}
+
+function authHeaders(): Record<string, string> {
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const response = await fetch(`${API_URL}${path}`, {
+    method,
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (!response.ok) throw new ApiError(response.status, path);
+  return (response.status === 204 ? undefined : await response.json()) as T;
+}
+
+function post<T>(path: string, body: unknown): Promise<T> {
+  return request<T>("POST", path, body);
 }
 
 export function simulate(profile: Profile, decision: Decision | null, horizon = 36) {
@@ -92,7 +122,6 @@ export function simulate(profile: Profile, decision: Decision | null, horizon = 
 export function getHealthScore(profile: Profile, decision: Decision | null) {
   return post<HealthScoreResult>("/health-score", { profile, decision });
 }
-
 
 export type ScenarioOut = {
   key: string;
@@ -135,7 +164,6 @@ export function stressTest(profile: Profile, decision: Decision, shock: Shock, h
   });
 }
 
-
 export type SavedSimulation = {
   id: number;
   name: string;
@@ -151,13 +179,28 @@ export function saveSimulation(name: string, profile: Profile, decision: Decisio
   return post<SavedSimulation>("/history", { name, profile, decision, horizon_months: horizon });
 }
 
-export async function listHistory(): Promise<SavedSimulation[]> {
-  const response = await fetch(`${API_URL}/history`);
-  if (!response.ok) throw new Error(`L'API a répondu ${response.status} sur /history`);
-  return response.json() as Promise<SavedSimulation[]>;
+export function listHistory() {
+  return request<SavedSimulation[]>("GET", "/history");
 }
 
-export async function deleteSimulation(id: number): Promise<void> {
-  const response = await fetch(`${API_URL}/history/${id}`, { method: "DELETE" });
-  if (!response.ok) throw new Error(`L'API a répondu ${response.status} sur /history/${id}`);
+export function deleteSimulation(id: number) {
+  return request<void>("DELETE", `/history/${id}`);
+}
+
+// ---------- Comptes ----------
+
+export type User = { id: number; email: string; created_at: string };
+
+export async function register(email: string, password: string) {
+  const { access_token } = await post<{ access_token: string }>("/auth/register", { email, password });
+  setToken(access_token);
+}
+
+export async function login(email: string, password: string) {
+  const { access_token } = await post<{ access_token: string }>("/auth/login", { email, password });
+  setToken(access_token);
+}
+
+export function getMe() {
+  return request<User>("GET", "/auth/me");
 }
