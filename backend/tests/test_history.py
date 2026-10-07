@@ -1,27 +1,10 @@
-"""Tests de l'historique, sur une base SQLite en mémoire (pas besoin de Docker)."""
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
+"""Tests de l'historique : chaque utilisateur ne voit que ses propres simulations."""
+import uuid
 
-from app.db.session import Base, get_db
+from fastapi.testclient import TestClient
+
 from app.main import app
 
-test_engine = create_engine("sqlite://", connect_args={"check_same_thread": False},
-                            poolclass=StaticPool)
-TestSession = sessionmaker(bind=test_engine)
-Base.metadata.create_all(bind=test_engine)
-
-
-def override_get_db():
-    db = TestSession()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-app.dependency_overrides[get_db] = override_get_db
 client = TestClient(app)
 
 SAVE = {
@@ -35,30 +18,50 @@ SAVE = {
 }
 
 
+def new_user() -> dict:
+    """Crée un compte avec un email unique et renvoie l'en-tête d'authentification."""
+    email = f"test-{uuid.uuid4().hex[:8]}@exemple.fr"
+    token = client.post("/auth/register",
+                        json={"email": email, "password": "motdepasse123"}).json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
+
+
+def test_history_requires_login():
+    assert client.get("/history").status_code == 401
+    assert client.post("/history", json=SAVE).status_code == 401
+
+
 def test_save_list_and_delete():
-    saved = client.post("/history", json=SAVE)
+    auth = new_user()
+    saved = client.post("/history", json=SAVE, headers=auth)
     assert saved.status_code == 201
     body = saved.json()
     assert body["name"] == "Voiture raisonnable"
     assert 0 <= body["health_score"] <= 100
 
-    listed = client.get("/history").json()
-    assert any(s["id"] == body["id"] for s in listed)
-
-    assert client.delete(f"/history/{body['id']}").status_code == 204
-    assert all(s["id"] != body["id"] for s in client.get("/history").json())
+    assert [s["id"] for s in client.get("/history", headers=auth).json()] == [body["id"]]
+    assert client.delete(f"/history/{body['id']}", headers=auth).status_code == 204
+    assert client.get("/history", headers=auth).json() == []
 
 
 def test_newest_first():
-    first = client.post("/history", json={**SAVE, "name": "Premier"}).json()
-    second = client.post("/history", json={**SAVE, "name": "Second"}).json()
-    ids = [s["id"] for s in client.get("/history").json()]
-    assert ids.index(second["id"]) < ids.index(first["id"])
+    auth = new_user()
+    first = client.post("/history", json={**SAVE, "name": "Premier"}, headers=auth).json()
+    second = client.post("/history", json={**SAVE, "name": "Second"}, headers=auth).json()
+    ids = [s["id"] for s in client.get("/history", headers=auth).json()]
+    assert ids == [second["id"], first["id"]]
+
+
+def test_users_cannot_see_or_delete_each_other():
+    alice, bob = new_user(), new_user()
+    saved = client.post("/history", json=SAVE, headers=alice).json()
+    assert client.get("/history", headers=bob).json() == []
+    assert client.delete(f"/history/{saved['id']}", headers=bob).status_code == 404
 
 
 def test_delete_unknown_returns_404():
-    assert client.delete("/history/999999").status_code == 404
+    assert client.delete("/history/999999", headers=new_user()).status_code == 404
 
 
 def test_empty_name_is_rejected():
-    assert client.post("/history", json={**SAVE, "name": ""}).status_code == 422
+    assert client.post("/history", json={**SAVE, "name": ""}, headers=new_user()).status_code == 422
