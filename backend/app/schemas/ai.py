@@ -12,4 +12,6 @@ class LetterRequest(BaseModel):
 
 class LetterResponse(BaseModel):
     letter: str
-    facts: dict   # les chiffres utilisés, pour que l'utilisateur puisse les vérifier
+    verified: bool          # True si la lettre a passé toutes les vérifications
+    problems: list[str]     # ce qui reste à corriger si verified est False
+    facts: dict             # les chiffres utilisés, pour que l'utilisateur puisse les vérifier

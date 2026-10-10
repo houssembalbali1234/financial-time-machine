@@ -6,7 +6,7 @@ import httpx
 LetterWriter = Callable[[str, str], str]   # (consigne, situation) -> texte
 
 
-def make_ollama_writer(base_url: str, model: str, timeout: float,
+def make_ollama_writer(base_url: str, model: str, timeout: float, temperature: float = 0.3,
                        client: httpx.Client | None = None) -> LetterWriter:
     """Fabrique une fonction qui envoie une consigne et une situation à Llama, et renvoie sa réponse."""
     http = client or httpx.Client(timeout=timeout)
@@ -19,7 +19,7 @@ def make_ollama_writer(base_url: str, model: str, timeout: float,
                 {"role": "user", "content": prompt},
             ],
             "stream": False,                     # on attend la réponse complète
-            "options": {"temperature": 0.7},     # un peu de variété, sans délirer
+            "options": {"temperature": temperature},   # bas = plus régulier, moins de dérapages
         })
         response.raise_for_status()
         return response.json()["message"]["content"].strip()
