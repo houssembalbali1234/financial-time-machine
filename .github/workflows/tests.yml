@@ -33,5 +33,6 @@ jobs:
           node-version: "24"
       - run: npm install --no-audit --no-fund
       - run: npm run lint
+      - run: npx next typegen
       - run: npx tsc --noEmit
       - run: npm run build
