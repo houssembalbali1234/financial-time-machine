@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { FutureChart } from "@/components/FutureChart";
+import { FutureLetter } from "@/components/FutureLetter";
 import { HealthPanel } from "@/components/HealthPanel";
 import { HistoryPanel } from "@/components/HistoryPanel";
 import { NumberField } from "@/components/NumberField";
@@ -253,6 +254,10 @@ export default function Home() {
 
           <div className="rounded-lg border border-ligne bg-papier p-6">
             <StressTest profile={profile} decision={decision} horizon={horizon} />
+          </div>
+
+          <div className="rounded-lg border border-ligne bg-papier p-6">
+            <FutureLetter profile={profile} decision={decision} horizon={horizon} />
           </div>
 
           <div className="rounded-lg border border-ligne bg-papier p-6">

@@ -204,3 +204,11 @@ export async function login(email: string, password: string) {
 export function getMe() {
   return request<User>("GET", "/auth/me");
 }
+
+// ---------- Intelligence artificielle ----------
+
+export type FutureLetter = { letter: string; facts: Record<string, number | string | null> };
+
+export function writeFutureLetter(profile: Profile, decision: Decision, horizon: number) {
+  return post<FutureLetter>("/ai/future-letter", { profile, decision, horizon_months: horizon });
+}
