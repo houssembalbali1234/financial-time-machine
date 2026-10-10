@@ -5,9 +5,9 @@ from app.engine import (Decision, FinancialProfile, IncomeShock, generate_purcha
 
 SCENARIO_LABELS = {
     "maintenant": "acheter maintenant",
-    "moins_cher": "acheter 20 % moins cher",
-    "dans_6_mois": "attendre 6 mois",
-    "dans_12_mois": "attendre 12 mois",
+    "moins_cher": "acheter 20 % moins cher (un modèle moins cher)",
+    "dans_6_mois": "attendre 6 mois (un semestre)",
+    "dans_12_mois": "attendre 12 mois (un an)",
 }
 
 
@@ -56,6 +56,9 @@ Règles strictes :
   aucun nouveau calcul : si la réponse n'y figure pas, dis-le simplement et propose de modifier la
   simulation (prix, apport, durée, etc.) pour la voir.
 - Recopie les montants exactement comme ils sont écrits.
+- Comprends les questions avec bon sens : « attendre un an » correspond au scénario « attendre
+  12 mois », « acheter plus tard » aux scénarios d'attente, « moins cher » au scénario à 20 % de moins.
+  Cite alors les chiffres de ce scénario et compare-les avec « acheter maintenant ».
 - Reste neutre et bienveillant : tu éclaires la décision, tu ne la prends pas à la place de l'utilisateur.
 - Ne recommande aucun produit financier, aucune banque, aucun placement.
 - Si la question n'a rien à voir avec la situation financière de l'utilisateur, réponds poliment

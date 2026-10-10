@@ -217,3 +217,11 @@ export type FutureLetter = {
 export function writeFutureLetter(profile: Profile, decision: Decision, horizon: number) {
   return post<FutureLetter>("/ai/future-letter", { profile, decision, horizon_months: horizon });
 }
+
+export type ChatMessage = { role: "user" | "assistant"; content: string };
+export type AskResult = { answer: string; verified: boolean };
+
+export function askAssistant(profile: Profile, decision: Decision, horizon: number,
+                             question: string, history: ChatMessage[]) {
+  return post<AskResult>("/ai/ask", { profile, decision, horizon_months: horizon, question, history });
+}
