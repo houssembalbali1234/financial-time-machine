@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, health_score, history, simulations
+from app.api.routes import ai, auth, health_score, history, simulations
 from app.db import models  # noqa: F401  (enregistre les tables auprès de Base)
 from app.db.session import Base, engine
 
@@ -42,3 +42,4 @@ app.include_router(simulations.router)
 app.include_router(health_score.router)
 app.include_router(history.router)
 app.include_router(auth.router)
+app.include_router(ai.router)

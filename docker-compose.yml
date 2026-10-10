@@ -15,16 +15,27 @@ services:
       interval: 5s
       retries: 5
 
+  ollama:
+    image: ollama/ollama
+    container_name: ftm-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+
   backend:
     build: ./backend
     container_name: ftm-backend
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      OLLAMA_URL: http://ollama:11434
     ports:
       - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
+      ollama:
+        condition: service_started
 
   frontend:
     build:
@@ -39,3 +50,4 @@ services:
 
 volumes:
   pgdata:
+  ollama-models:
