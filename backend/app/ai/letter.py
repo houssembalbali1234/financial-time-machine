@@ -46,9 +46,9 @@ def assess(facts: LetterFacts) -> str:
     return "confortable : l'épargne reste positive avec une bonne marge de sécurité"
 
 
-def money(value: float) -> str:
-    """Montant arrondi à la centaine, écrit à la française : 7978 -> « 8 000 € »."""
-    rounded = round(value / 100) * 100
+def money(value: float, step: int = 100) -> str:
+    """Montant arrondi (à la centaine par défaut), écrit à la française : 7978 -> « 8 000 € »."""
+    rounded = round(value / step) * step
     return f"{rounded:,.0f} €".replace(",", " ")
 
 
