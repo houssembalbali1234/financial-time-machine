@@ -207,7 +207,12 @@ export function getMe() {
 
 // ---------- Intelligence artificielle ----------
 
-export type FutureLetter = { letter: string; facts: Record<string, number | string | null> };
+export type FutureLetter = {
+  letter: string;
+  verified: boolean;      // true si tous les chiffres clés ont été retrouvés dans la lettre
+  problems: string[];
+  facts: Record<string, number | string | null>;
+};
 
 export function writeFutureLetter(profile: Profile, decision: Decision, horizon: number) {
   return post<FutureLetter>("/ai/future-letter", { profile, decision, horizon_months: horizon });
